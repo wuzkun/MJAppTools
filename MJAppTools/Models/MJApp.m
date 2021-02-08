@@ -44,6 +44,10 @@
     return self;
 }
 
+- (void)updateWithGroupPaths:(NSArray <NSString *>*)groupPaths {
+    _groupPaths = [groupPaths copy];
+}
+
 - (void)setupExecutable
 {
     NSRange range = NSMakeRange([self.bundlePath rangeOfString:@"/" options:NSBackwardsSearch].location + 1, self.bundlePath.lastPathComponent.length - 4);

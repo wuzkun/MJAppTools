@@ -18,6 +18,6 @@ typedef enum {
 
 @interface MJAppTools : NSObject
 
-+ (void)listUserAppsWithType:(MJListAppsType)type regex:(NSString *)regex operation:(void (^)(NSArray *apps))operation;
++ (void)listUserAppsWithType:(MJListAppsType)type regex:(NSString *)regex operation:(void (^)(NSArray <MJApp *>*apps))operation;
 
 @end

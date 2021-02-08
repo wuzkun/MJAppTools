@@ -26,9 +26,27 @@
     return NO;
 }
 
-+ (void)listUserAppsWithType:(MJListAppsType)type regex:(NSString *)regex operation:(void (^)(NSArray *apps))operation
++ (void)listUserAppsWithType:(MJListAppsType)type regex:(NSString *)regex operation:(void (^)(NSArray <MJApp *>*apps))operation
 {
     if (!operation) return;
+    
+    
+    NSString *groupHome = @"/private/var/mobile/Containers/Shared/AppGroup";
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    NSError *error = nil;
+    NSArray<NSString *> *groupFolderNames = [fileManager contentsOfDirectoryAtPath:groupHome error:&error];
+    
+    /// gourpId: path
+    NSMutableDictionary <NSString *, NSString *>*pathDict = [NSMutableDictionary dictionary];
+    
+    for (NSString *groupFolderName in groupFolderNames) {
+        NSString *plistPath = [groupHome stringByAppendingPathComponent:[NSString stringWithFormat:@"%@/.com.apple.mobile_container_manager.metadata.plist", groupFolderName]];
+        NSDictionary *dict = [NSDictionary dictionaryWithContentsOfFile:plistPath];
+        NSString *groupId = dict[@"MCMMetadataIdentifier"];
+        if (groupId.length) {
+            [pathDict setObject:[groupHome stringByAppendingPathComponent:groupFolderName] forKey:groupId];
+        }
+    }
     
     // 正则
     NSRegularExpression *exp = regex ? [NSRegularExpression regularExpressionWithPattern:regex options:NSRegularExpressionCaseInsensitive error:nil] : nil;
@@ -61,7 +79,32 @@
         if (type == MJListAppsTypeUserDecrypted && app.executable.isEncrypted) continue;
         if (type == MJListAppsTypeUserEncrypted && !app.executable.isEncrypted) continue;
         
+        NSMutableArray <NSString *> *tempGroupPaths = [NSMutableArray array];
+        for (NSString *groupId in pathDict.allKeys) {
+            if ([groupId rangeOfString:app.bundleIdentifier].location != NSNotFound) {
+                [tempGroupPaths addObject:pathDict[groupId]];
+            } else {
+                NSArray <NSString *>*groupIdComponents = [groupId componentsSeparatedByString:@"."];
+                NSArray <NSString *>*appIdComponents = [app.bundleIdentifier componentsSeparatedByString:@"."];
+                NSInteger count = 0;
+                for (NSString *groupIdComponent in groupIdComponents) {
+                    if ([groupIdComponent isEqualToString:@"com"] || [groupIdComponent isEqualToString:@"apple"]) {
+                        continue;
+                    }
+                    if ([appIdComponents indexOfObject:groupIdComponent] != NSNotFound) {
+                        count ++;
+                    }
+                }
+                if (count >= 2) {
+                    [tempGroupPaths addObject:pathDict[groupId]];
+                }
+            }
+        }
+        [app updateWithGroupPaths:tempGroupPaths];
         [apps addObject:app];
+        
+        
+        
     }
     
     operation(apps);

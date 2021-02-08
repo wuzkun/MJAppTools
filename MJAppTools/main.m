@@ -129,6 +129,16 @@ void list_app(MJApp *app, int index)
         [MJPrintTools printColor:MJPrintColorPath format:app.dataPath];
     }
     
+    if (app.groupPaths.count) {
+        MJPrintNewLine;
+        [MJPrintTools print:@"  GroupPath: "];
+        for (NSString *grourPath in app.groupPaths) {
+            MJPrintNewLine;
+            [MJPrintTools print:@"    "];
+            [MJPrintTools printColor:MJPrintColorPath format:grourPath];
+        }
+    }
+    
     if (app.executable.isFat) {
         MJPrintNewLine;
         [MJPrintTools print:@"  "];
@@ -147,7 +157,7 @@ void list_app(MJApp *app, int index)
 
 void list_apps(MJListAppsType type, NSString *regex)
 {
-    [MJAppTools listUserAppsWithType:type regex:regex operation:^(NSArray *apps) {
+    [MJAppTools listUserAppsWithType:type regex:regex operation:^(NSArray <MJApp *>*apps) {
         [MJPrintTools print:@"# 一共"];
         [MJPrintTools printColor:MJPrintColorCount format:@"%zd", apps.count];
         [MJPrintTools print:@"个"];
